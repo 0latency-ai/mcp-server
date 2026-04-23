@@ -1,0 +1,30 @@
+  // Programming languages
+  ...[
+    "Python", "JavaScript", "TypeScript", "Rust", "Go", "Java", "C\\+\\+",
+    "C#", "Ruby", "PHP", "Swift", "Kotlin", "Scala", "Elixir", "Clojure",
+    "Haskell", "Lua", "R", "Julia", "Dart", "Zig",
+  ].map((lang) => ({
+    category: "programming_language",
+    key: lang.replace("\\+\\+", "++").replace("\\#", "#"),
+    patterns: [
+      new RegExp(`\\b(?:I (?:use|write|code|program|develop|work) (?:in|with) )${lang}\\b`, "i"),
+      new RegExp(`\\b(?:my|our) ${lang} (?:project|code|app|service|codebase)\\b`, "i"),
+      new RegExp(`\\b${lang} (?:developer|engineer|programmer)\\b`, "i"),
+    ],
+  })),
+  // Frameworks / tools
+  ...[
+    "React", "Next\\.?js", "Vue", "Angular", "Svelte", "Django", "Flask",
+    "FastAPI", "Express", "NestJS", "Rails", "Laravel", "Spring Boot",
+    "Tailwind", "PostgreSQL", "MongoDB", "Redis", "Docker", "Kubernetes",
+    "AWS", "GCP", "Azure", "Vercel", "Supabase", "Firebase", "Terraform",
+    "Node\\.?js", "Deno", "Bun",
+  ].map((fw) => ({
+    category: "tech_stack",
+    key: fw.replace(/\\\.\?/g, "").replace(/\\/, ""),
+    patterns: [
+      new RegExp(`\\b(?:I (?:use|work with|deploy (?:on|to)|build with) )${fw}\\b`, "i"),
+      new RegExp(`\\b(?:my|our) ${fw}\\b`, "i"),
+      new RegExp(`\\b(?:using|running|deployed on|built (?:with|in|on)) ${fw}\\b`, "i"),
+    ],
+  })),

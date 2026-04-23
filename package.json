@@ -1,0 +1,67 @@
+{
+  "name": "@0latency/mcp-server",
+  "version": "0.2.0",
+  "description": "MCP server for 0Latency — persistent memory layer for AI agents. Unified codebase for both HTTP/SSE and stdio transports.",
+  "author": "Justin Ghiglia <justin@0latency.ai>",
+  "license": "MIT",
+  "type": "module",
+  "mcpName": "ai.0latency/memory",
+  "homepage": "https://0latency.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0latency-ai/mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0latency-ai/mcp-server/issues"
+  },
+  "bin": {
+    "0latency-mcp": "./dist/server-stdio.js"
+  },
+  "main": "./dist/server-stdio.js",
+  "types": "./dist/server-stdio.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:sse": "tsc",
+    "dev": "tsc --watch",
+    "start:stdio": "node dist/server-stdio.js",
+    "start:sse": "node dist/server-sse.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "redis": "^5.11.0",
+    "uuid": "^13.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "memory",
+    "persistent-memory",
+    "agent-memory",
+    "ai-memory",
+    "claude",
+    "cursor",
+    "context",
+    "0latency",
+    "knowledge-graph",
+    "long-term-memory"
+  ]
+}
