@@ -1,7 +1,7 @@
 {
   "name": "@0latency/mcp-server",
-  "version": "0.2.0",
-  "description": "MCP server for 0Latency — persistent memory layer for AI agents. Unified codebase for both HTTP/SSE and stdio transports.",
+  "version": "0.2.1",
+  "description": "Persistent memory MCP server for AI agents — hybrid semantic recall, multi-agent namespacing, session checkpoints. Works with Claude, Claude Code, Cursor, Windsurf, and any MCP client.",
   "author": "Justin Ghiglia <justin@0latency.ai>",
   "license": "MIT",
   "type": "module",
@@ -52,16 +52,20 @@
   },
   "keywords": [
     "mcp",
-    "model-context-protocol",
+    "mcp-server",
     "memory",
     "persistent-memory",
-    "agent-memory",
     "ai-memory",
+    "agent-memory",
+    "model-context-protocol",
+    "ai-agent",
     "claude",
+    "claude-code",
     "cursor",
-    "context",
-    "0latency",
-    "knowledge-graph",
-    "long-term-memory"
+    "windsurf",
+    "llm-memory",
+    "semantic-search",
+    "multi-agent",
+    "context-management"
   ]
 }

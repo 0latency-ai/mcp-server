@@ -95,10 +95,10 @@ export declare const importConversationSchema: {
         role: z.ZodEnum<["human", "assistant", "user", "system"]>;
         content: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        role: "human" | "assistant" | "user" | "system";
+        role: "user" | "assistant" | "human" | "system";
         content: string;
     }, {
-        role: "human" | "assistant" | "user" | "system";
+        role: "user" | "assistant" | "human" | "system";
         content: string;
     }>, "many">;
     source: z.ZodOptional<z.ZodString>;

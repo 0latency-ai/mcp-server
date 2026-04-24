@@ -9,8 +9,24 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 import { createClient } from "redis";
+import { z } from "zod";
 import { getTenantId } from "./api.js";
 import * as tools from "./tools.js";
+// Config schema with optional fields for Smithery
+export const configSchema = z.object({
+    apiKey: z.string().describe("Your 0Latency API key"),
+    agentId: z.string()
+        .optional()
+        .describe("Default agent namespace for memory operations (e.g. 'user-justin')"),
+    budgetTokens: z.number()
+        .default(4000)
+        .optional()
+        .describe("Default token budget for memory recall responses (500–16000)"),
+    dynamicBudget: z.boolean()
+        .default(false)
+        .optional()
+        .describe("Let the API auto-size recall budget based on relevance"),
+});
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
@@ -27,10 +43,10 @@ redisSubscriber.on("error", (err) => {
 (async () => {
     try {
         await redisSubscriber.connect();
-        console.log("\u2713 Redis subscriber connected");
+        console.log("✓ Redis subscriber connected");
     }
     catch (err) {
-        console.error("\u2717 Redis subscriber connection failed:", err);
+        console.error("✗ Redis subscriber connection failed:", err);
     }
 })();
 // ---------------------------------------------------------------------------
@@ -69,62 +85,132 @@ function createMcpServer(apiKey) {
         version: "0.2.0",
     });
     const ctx = { apiKey };
-    // Register all 14 tools
+    // Register all 14 tools with annotations
     server.registerTool("memory_add", {
         description: "Extract and store memories from a conversation turn. Provide the human message, agent response, and an agent_id to namespace the memories.",
         inputSchema: tools.memoryAddSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+        },
     }, async (input) => tools.memoryAdd(ctx, input));
     server.registerTool("memory_write", {
         description: "Directly write a memory to storage (seed API). Bypasses extraction. Use for explicit facts, preferences, or instructions.",
         inputSchema: tools.memoryWriteSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+        },
     }, async (input) => tools.memoryWrite(ctx, input));
     server.registerTool("memory_recall", {
         description: "Recall relevant memories given a conversation context. Returns a formatted context block ready to inject into a prompt.",
         inputSchema: tools.memoryRecallSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryRecall(ctx, input));
     server.registerTool("memory_search", {
         description: "Search memories by text query. Returns matching memories ranked by relevance.",
         inputSchema: tools.memorySearchSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memorySearch(ctx, input));
     server.registerTool("memory_list", {
         description: "List stored memories with optional filters. Supports pagination via limit/offset.",
         inputSchema: tools.memoryListSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryList(ctx, input));
     server.registerTool("memory_delete", {
         description: "Delete a specific memory by its ID.",
         inputSchema: tools.memoryDeleteSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: true,
+            idempotentHint: false,
+        },
     }, async (input) => tools.memoryDelete(ctx, input));
     server.registerTool("list_agents", {
         description: "List all agent namespaces for this tenant with memory counts. Useful for discovering available agents.",
         inputSchema: tools.listAgentsSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async () => tools.listAgents(ctx));
     server.registerTool("memory_history", {
         description: "Get the full version history for a specific memory. Shows how the memory evolved over time, including what changed and why.",
         inputSchema: tools.memoryHistorySchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryHistory(ctx, input));
     server.registerTool("memory_graph_traverse", {
         description: "Query the knowledge graph. Explore an entity's relationships and connections to other entities.",
         inputSchema: tools.memoryGraphTraverseSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryGraphTraverse(ctx, input));
     server.registerTool("memory_entities", {
         description: "List entities in the knowledge graph. Optionally filter by entity type.",
         inputSchema: tools.memoryEntitiesSchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryEntities(ctx, input));
     server.registerTool("memory_by_entity", {
         description: "Get memories associated with a specific entity in the knowledge graph.",
         inputSchema: tools.memoryByEntitySchema,
+        annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+        },
     }, async (input) => tools.memoryByEntity(ctx, input));
     server.registerTool("import_document", {
         description: "Import a large text document (project brief, wiki page, documentation, etc.) and extract memories from it. Content is automatically chunked and processed through the extraction pipeline.",
         inputSchema: tools.importDocumentSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+        },
     }, async (input) => tools.importDocument(ctx, input));
     server.registerTool("import_conversation", {
         description: "Import a conversation export (e.g. from Claude Desktop or ChatGPT) and extract memories from each turn pair. Provide the conversation as an array of {role, content} objects.",
         inputSchema: tools.importConversationSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+        },
     }, async (input) => tools.importConversation(ctx, input));
     server.registerTool("memory_feedback", {
         description: "Submit feedback on recalled memories. Helps 0Latency learn which memories are useful vs ignored. This powers self-improving importance scores.",
         inputSchema: tools.memoryFeedbackSchema,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+        },
     }, async (input) => tools.memoryFeedback(ctx, input));
     return server;
 }
@@ -311,8 +397,8 @@ app.get("/mcp", async (req, res) => {
     console.log(`[MCP GET] Request handled for ${req.ip}`);
 });
 app.listen(PORT, () => {
-    console.log(`\u2713 0Latency MCP SSE server listening on http://localhost:${PORT}`);
-    console.log(`\u2713 MCP endpoint: http://localhost:${PORT}/mcp`);
-    console.log(`\u2713 Health check: http://localhost:${PORT}/health`);
+    console.log(`✓ 0Latency MCP SSE server listening on http://localhost:${PORT}`);
+    console.log(`✓ MCP endpoint: http://localhost:${PORT}/mcp`);
+    console.log(`✓ Health check: http://localhost:${PORT}/health`);
 });
 //# sourceMappingURL=server-sse.js.map

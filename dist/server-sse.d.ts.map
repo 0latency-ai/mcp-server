@@ -1,1 +1,1 @@
-{"version":3,"file":"server-sse.d.ts","sourceRoot":"","sources":["../src/server-sse.ts"],"names":[],"mappings":"AAAA;;;GAGG"}
+{"version":3,"file":"server-sse.d.ts","sourceRoot":"","sources":["../src/server-sse.ts"],"names":[],"mappings":"AAAA;;;GAGG;AASH,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAKxB,eAAO,MAAM,YAAY;;;;;;;;;;;;;;;EAavB,CAAC"}

@@ -1,0 +1,34 @@
+startCommand:
+  type: http
+  configSchema:
+    type: object
+    properties:
+      apiKey:
+        type: string
+        title: API Key
+        description: "Your 0Latency API key (starts with zl_live_)"
+        "x-from":
+          header: x-api-key
+      agentId:
+        type: string
+        title: Agent ID
+        description: "Default agent namespace for memory operations (e.g. 'user-justin')"
+      budgetTokens:
+        type: integer
+        title: Token Budget
+        description: "Default token budget for memory recall responses (500–16000)"
+        default: 4000
+        minimum: 500
+        maximum: 16000
+      dynamicBudget:
+        type: boolean
+        title: Dynamic Budget
+        description: "Let the API auto-size recall budget based on relevance"
+        default: false
+    required:
+      - apiKey
+  exampleConfig:
+    apiKey: "zl_live_your_key_here"
+    agentId: "user-me"
+    budgetTokens: 4000
+    dynamicBudget: false
