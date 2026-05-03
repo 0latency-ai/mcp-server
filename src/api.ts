@@ -67,11 +67,11 @@ export async function api<T = unknown>(opts: ApiOptions): Promise<T> {
  */
 export async function getTenantId(apiKey: string): Promise<string | null> {
   try {
-    const result = await api<{ tenant_id: string }>({
+    const result = await api<{ id: string }>({
       apiKey,
-      path: "/tenant/info",
+      path: "/tenant-info",
     });
-    return result?.tenant_id || null;
+    return result?.id || null;
   } catch (err) {
     console.error("[Tenant fetch] Failed:", err);
     return null;
