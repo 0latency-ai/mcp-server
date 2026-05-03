@@ -51,9 +51,9 @@ export async function getTenantId(apiKey) {
     try {
         const result = await api({
             apiKey,
-            path: "/tenant/info",
+            path: "/tenant-info",
         });
-        return result?.tenant_id || null;
+        return result?.id || null;
     }
     catch (err) {
         console.error("[Tenant fetch] Failed:", err);

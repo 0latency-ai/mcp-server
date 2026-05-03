@@ -316,9 +316,15 @@ app.post("/token", express.urlencoded({ extended: true }), (req, res) => {
 // MCP POST endpoint
 app.post("/mcp", async (req, res) => {
     const apiKey = extractApiKey(req);
-    console.log(`[MCP POST] Request from ${req.ip}`, apiKey ? "with valid API key" : "MISSING API KEY");
-    if (!apiKey || !apiKey.startsWith("zl_")) {
-        res.status(401).json({ error: "Invalid or missing API key. Use x-api-key header" });
+    console.log(`[MCP POST] Request from ${req.ip}`, apiKey ? "with API key (validation pending)" : "MISSING API KEY");
+    if (!apiKey) {
+        res.status(401).json({ error: "Missing API key" });
+        return;
+    }
+    const tenantId = await getTenantId(apiKey);
+    if (!tenantId) {
+        console.log(`[MCP POST] Auth FAILED for ${req.ip}: tenant lookup returned no match for key suffix ${apiKey.slice(-4)}`);
+        res.status(401).json({ error: "API key not recognized. If you recently rotated keys, see https://0latency.ai/docs#key-rotation for what to update." });
         return;
     }
     const mcpServer = createMcpServer(apiKey);
@@ -330,13 +336,18 @@ app.post("/mcp", async (req, res) => {
 // MCP GET endpoint (SSE)
 app.get("/mcp", async (req, res) => {
     const apiKey = extractApiKey(req);
-    console.log(`[MCP GET] Request from ${req.ip}`, apiKey ? "with valid API key" : "MISSING API KEY");
-    if (!apiKey || !apiKey.startsWith("zl_")) {
-        res.status(401).json({ error: "Invalid or missing API key. Use x-api-key header" });
+    console.log(`[MCP GET] Request from ${req.ip}`, apiKey ? "with API key (validation pending)" : "MISSING API KEY");
+    if (!apiKey) {
+        res.status(401).json({ error: "Missing API key" });
         return;
     }
     const tenantId = await getTenantId(apiKey);
-    console.log(`[MCP GET] Tenant: ${tenantId || "unknown"}`);
+    if (!tenantId) {
+        console.log(`[MCP GET] Auth FAILED for ${req.ip}: tenant lookup returned no match for key suffix ${apiKey.slice(-4)}`);
+        res.status(401).json({ error: "API key not recognized. If you recently rotated keys, see https://0latency.ai/docs#key-rotation for what to update." });
+        return;
+    }
+    console.log(`[MCP GET] Tenant: ${tenantId}`);
     // SSE headers
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
