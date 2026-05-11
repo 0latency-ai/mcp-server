@@ -4,8 +4,39 @@
  * Handles both authentication models:
  * - HTTP/SSE: API key from per-request context
  * - stdio: API key from environment variable
+ *
+ * CP9 Phase 2 Track B2: Error envelope parsing support
  */
 const BASE_URL = (process.env.ZERO_LATENCY_API_URL ?? "https://api.0latency.ai").replace(/\/+$/, "");
+/**
+ * Format API error from envelope or legacy format
+ * Returns formatted error message with hint and docs link
+ */
+function formatAPIError(errorData) {
+    // Handle legacy plain string format
+    if (typeof errorData === 'string') {
+        return errorData;
+    }
+    // Try parsing new error envelope format
+    try {
+        const error = errorData?.detail?.error;
+        if (error && typeof error === 'object') {
+            let msg = `Error: ${error.message}`;
+            if (error.hint) {
+                msg += `\n💡 ${error.hint}`;
+            }
+            if (error.docs_url) {
+                msg += `\n📖 ${error.docs_url}`;
+            }
+            return msg;
+        }
+    }
+    catch {
+        // Fallback to JSON stringification
+    }
+    // Fallback: stringify the error data
+    return JSON.stringify(errorData);
+}
 /**
  * Make an HTTP request to the 0Latency API
  * Auth: Uses apiKey parameter if provided, otherwise falls back to env var
@@ -35,7 +66,15 @@ export async function api(opts) {
     });
     const text = await res.text();
     if (!res.ok) {
-        throw new Error(`0Latency API ${res.status}: ${text}`);
+        // Try to parse error envelope (CP9 Phase 2 Track B2)
+        let errorData;
+        try {
+            errorData = JSON.parse(text);
+        }
+        catch {
+            errorData = text;
+        }
+        throw new Error(`0Latency API ${res.status}: ${formatAPIError(errorData)}`);
     }
     try {
         return JSON.parse(text);
@@ -51,9 +90,9 @@ export async function getTenantId(apiKey) {
     try {
         const result = await api({
             apiKey,
-            path: "/tenant/info",
+            path: "/tenant-info",
         });
-        return result?.tenant_id || null;
+        return result?.id || null;
     }
     catch (err) {
         console.error("[Tenant fetch] Failed:", err);

@@ -167,8 +167,21 @@ export async function memoryAdd(ctx: ToolContext, input: any) {
   const baseText = JSON.stringify(result, null, 2);
   const outputText = appendSentinelWarning(baseText, result);
 
+  // CP9 Phase 2 Track B3: Check for next_action (first-recall demo flow)
+  const contentBlocks = [{ type: "text" as const, text: outputText }];
+
+  if (result && typeof result === 'object' && 'next_action' in result) {
+    const nextAction = (result as any).next_action;
+    if (nextAction && typeof nextAction === 'object' && nextAction.suggested_query) {
+      contentBlocks.push({
+        type: "text" as const,
+        text: `\n\n💡 Try recalling: Use the memory_recall tool with query: '${nextAction.suggested_query}'`
+      });
+    }
+  }
+
   return {
-    content: [{ type: "text" as const, text: outputText }],
+    content: contentBlocks,
   };
 }
 
@@ -220,8 +233,21 @@ export async function memoryWrite(ctx: ToolContext, input: any) {
     recordDedup(input.content, resolvedAgentId || ctx.apiKey, (result as any).memory_ids[0]);
   }
 
+  // CP9 Phase 2 Track B3: Check for next_action (first-recall demo flow)
+  const contentBlocks = [{ type: "text" as const, text: JSON.stringify(result, null, 2) }];
+
+  if (result && typeof result === 'object' && 'next_action' in result) {
+    const nextAction = (result as any).next_action;
+    if (nextAction && typeof nextAction === 'object' && nextAction.suggested_query) {
+      contentBlocks.push({
+        type: "text" as const,
+        text: `\n\n💡 Try recalling: Use the memory_recall tool with query: '${nextAction.suggested_query}'`
+      });
+    }
+  }
+
   return {
-    content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+    content: contentBlocks,
   };
 }
 

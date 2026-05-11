@@ -130,8 +130,19 @@ export async function memoryAdd(ctx, input) {
     runActiveProfiler(ctx.apiKey, resolvedAgentId || "default", input.human_message, input.session_key).catch(() => { });
     const baseText = JSON.stringify(result, null, 2);
     const outputText = appendSentinelWarning(baseText, result);
+    // CP9 Phase 2 Track B3: Check for next_action (first-recall demo flow)
+    const contentBlocks = [{ type: "text", text: outputText }];
+    if (result && typeof result === 'object' && 'next_action' in result) {
+        const nextAction = result.next_action;
+        if (nextAction && typeof nextAction === 'object' && nextAction.suggested_query) {
+            contentBlocks.push({
+                type: "text",
+                text: `\n\n💡 Try recalling: Use the memory_recall tool with query: '${nextAction.suggested_query}'`
+            });
+        }
+    }
     return {
-        content: [{ type: "text", text: outputText }],
+        content: contentBlocks,
     };
 }
 export async function memoryWrite(ctx, input) {
@@ -176,8 +187,19 @@ export async function memoryWrite(ctx, input) {
     if (result && typeof result === 'object' && 'memory_ids' in result && Array.isArray(result.memory_ids) && result.memory_ids.length > 0) {
         recordDedup(input.content, resolvedAgentId || ctx.apiKey, result.memory_ids[0]);
     }
+    // CP9 Phase 2 Track B3: Check for next_action (first-recall demo flow)
+    const contentBlocks = [{ type: "text", text: JSON.stringify(result, null, 2) }];
+    if (result && typeof result === 'object' && 'next_action' in result) {
+        const nextAction = result.next_action;
+        if (nextAction && typeof nextAction === 'object' && nextAction.suggested_query) {
+            contentBlocks.push({
+                type: "text",
+                text: `\n\n💡 Try recalling: Use the memory_recall tool with query: '${nextAction.suggested_query}'`
+            });
+        }
+    }
     return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: contentBlocks,
     };
 }
 export async function memoryRecall(ctx, input) {

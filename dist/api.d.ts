@@ -4,6 +4,8 @@
  * Handles both authentication models:
  * - HTTP/SSE: API key from per-request context
  * - stdio: API key from environment variable
+ *
+ * CP9 Phase 2 Track B2: Error envelope parsing support
  */
 export interface ApiOptions {
     method?: string;
@@ -11,6 +13,20 @@ export interface ApiOptions {
     query?: Record<string, string | number | boolean | undefined>;
     body?: unknown;
     apiKey?: string;
+}
+/**
+ * CP9 Phase 2 Track B2: Standardized error envelope structure
+ */
+export interface APIError {
+    code: string;
+    message: string;
+    hint: string;
+    docs_url: string;
+}
+export interface ErrorEnvelope {
+    detail: {
+        error: APIError;
+    };
 }
 /**
  * Make an HTTP request to the 0Latency API

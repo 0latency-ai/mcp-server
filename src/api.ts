@@ -1,9 +1,11 @@
 /**
  * api.ts — Unified HTTP client for 0Latency Memory API
- * 
+ *
  * Handles both authentication models:
  * - HTTP/SSE: API key from per-request context
  * - stdio: API key from environment variable
+ *
+ * CP9 Phase 2 Track B2: Error envelope parsing support
  */
 
 const BASE_URL = (
@@ -16,6 +18,56 @@ export interface ApiOptions {
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
   apiKey?: string; // Optional for stdio (uses env), required for SSE
+}
+
+/**
+ * CP9 Phase 2 Track B2: Standardized error envelope structure
+ */
+export interface APIError {
+  code: string;
+  message: string;
+  hint: string;
+  docs_url: string;
+}
+
+export interface ErrorEnvelope {
+  detail: {
+    error: APIError;
+  };
+}
+
+/**
+ * Format API error from envelope or legacy format
+ * Returns formatted error message with hint and docs link
+ */
+function formatAPIError(errorData: any): string {
+  // Handle legacy plain string format
+  if (typeof errorData === 'string') {
+    return errorData;
+  }
+
+  // Try parsing new error envelope format
+  try {
+    const error = errorData?.detail?.error;
+    if (error && typeof error === 'object') {
+      let msg = `Error: ${error.message}`;
+
+      if (error.hint) {
+        msg += `\n💡 ${error.hint}`;
+      }
+
+      if (error.docs_url) {
+        msg += `\n📖 ${error.docs_url}`;
+      }
+
+      return msg;
+    }
+  } catch {
+    // Fallback to JSON stringification
+  }
+
+  // Fallback: stringify the error data
+  return JSON.stringify(errorData);
 }
 
 /**
@@ -52,7 +104,15 @@ export async function api<T = unknown>(opts: ApiOptions): Promise<T> {
   const text = await res.text();
 
   if (!res.ok) {
-    throw new Error(`0Latency API ${res.status}: ${text}`);
+    // Try to parse error envelope (CP9 Phase 2 Track B2)
+    let errorData: any;
+    try {
+      errorData = JSON.parse(text);
+    } catch {
+      errorData = text;
+    }
+
+    throw new Error(`0Latency API ${res.status}: ${formatAPIError(errorData)}`);
   }
 
   try {
